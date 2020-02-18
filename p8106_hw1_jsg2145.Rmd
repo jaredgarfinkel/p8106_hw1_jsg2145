@@ -8,6 +8,7 @@ output: html_document
 ```{r setup, include=FALSE}
 library(tidyverse)
 library(viridis)
+library(glmnet)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
@@ -23,4 +24,43 @@ scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
+
+```{r, echo = FALSE}
+df = read_csv("./solubility_train.csv") %>% 
+  janitor::clean_names()
+
+fit = lm(solubility ~ ., data = df)
+summary(fit)
+```
+
+```{r}
+df_test = read_csv("./solubility_test.csv") %>% 
+  janitor::clean_names()
+
+pred = predict(fit, data = df_test)
+
+MSE = mean((df_test$solubility - pred)^2)
+
+MSE
+```
+
+```{r}
+df = na.omit(df)
+
+# Train data input matrix and response vector
+
+x <- model.matrix(solubility~., df)
+y <- pull(df, solubility)
+
+lambda = cv.glmnet(x, y, family = "gaussian", alpha = 0)
+
+ridge.model.min <- glmnet(x, y, standardize = TRUE, alpha = 0, lambda = lambda$lambda.min)
+```
+
+```{r}
+pred_ridge = predict(ridge.model.min, s=lambda$lambda.min, newx=x)
+```
+
+
+
 
