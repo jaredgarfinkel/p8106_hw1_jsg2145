@@ -23,9 +23,10 @@ options(
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
+set.seed(1)
 ```
 
-```{r, echo = FALSE}
+```{r, results = "hide"}
 df = read_csv("./solubility_train.csv") %>% 
   janitor::clean_names()
 
@@ -49,18 +50,51 @@ df = na.omit(df)
 
 # Train data input matrix and response vector
 
-x <- model.matrix(solubility~., df)
+x <- model.matrix(solubility~., df)[,-1]
 y <- pull(df, solubility)
 
-lambda = cv.glmnet(x, y, family = "gaussian", alpha = 0)
 
-ridge.model.min <- glmnet(x, y, standardize = TRUE, alpha = 0, lambda = lambda$lambda.min)
+
+ridge.mod <- glmnet(x, y, 
+                    standardize = TRUE, 
+                    alpha = 0,
+                    lambda = exp(seq(-10, 1, length = 100)))
+
+mat.coef <- coef(ridge.mod)
+dim(mat.coef)
+
+
+cv.ridge = cv.glmnet(x, y, 
+                     type.measure = "mse", 
+                     alpha = 0, 
+                     lambda = exp(seq(-10, 1, length = 100)))
+
+plot(cv.ridge)
+```
+
+```{r, results = "hide"}
+plot(ridge.mod, xvar = "lambda", label = TRUE)
 ```
 
 ```{r}
-pred_ridge = predict(ridge.model.min, s=lambda$lambda.min, newx=x)
+best.lambda <- cv.ridge$lambda.min
+best.lambda
 ```
 
+```{r, results = "hide"}
+predict(ridge.mod, s = best.lambda, type = "coefficients")
+```
 
+```{r}
+df_test = df_test %>% 
+  na.omit()
 
+x_test = model.matrix(solubility~., df_test)[,-1]
+y_test = pull(df_test, solubility)
 
+ridge_pred = predict(ridge.mod, s = best.lambda, newx = x_test)
+
+mse = mean((ridge_pred - y_test)^2)
+```
+
+The MSE from the ridge model is `r round(mse, digits = 3)`
