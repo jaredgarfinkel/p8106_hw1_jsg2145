@@ -23,13 +23,16 @@ options(
 scale_colour_discrete = scale_colour_viridis_d
 scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
-set.seed(1)
 ```
 
 ```{r, results = "hide"}
 df = read_csv("./solubility_train.csv") %>% 
   janitor::clean_names()
+```
 
+## Part a
+
+```{r, results = "hide"}
 fit = lm(solubility ~ ., data = df)
 summary(fit)
 ```
@@ -38,12 +41,15 @@ summary(fit)
 df_test = read_csv("./solubility_test.csv") %>% 
   janitor::clean_names()
 
+set.seed(22)
 pred = predict(fit, data = df_test)
 
 MSE = mean((df_test$solubility - pred)^2)
 
 MSE
 ```
+
+## Part b
 
 ```{r}
 df = na.omit(df)
@@ -54,7 +60,7 @@ x <- model.matrix(solubility~., df)[,-1]
 y <- pull(df, solubility)
 
 
-
+set.seed(22)
 ridge.mod <- glmnet(x, y, 
                     standardize = TRUE, 
                     alpha = 0,
@@ -63,7 +69,7 @@ ridge.mod <- glmnet(x, y,
 mat.coef <- coef(ridge.mod)
 dim(mat.coef)
 
-
+set.seed(22)
 cv.ridge = cv.glmnet(x, y, 
                      type.measure = "mse", 
                      alpha = 0, 
@@ -89,6 +95,7 @@ predict(ridge.mod, s = best.lambda, type = "coefficients")
 df_test = df_test %>% 
   na.omit()
 
+set.seed(22)
 x_test = model.matrix(solubility~., df_test)[,-1]
 y_test = pull(df_test, solubility)
 
@@ -97,4 +104,42 @@ ridge_pred = predict(ridge.mod, s = best.lambda, newx = x_test)
 mse = mean((ridge_pred - y_test)^2)
 ```
 
-The MSE from the ridge model is `r round(mse, digits = 3)`
+The MSE from the ridge model is `r round(mse, digits = 3)`.
+
+```{r}
+set.seed(22)
+lasso.mod = glmnet(x, y, 
+                    standardize = TRUE, 
+                    alpha = 1,
+                    lambda = exp(seq(-10, 1, length = 100)))
+```
+
+```{r}
+set.seed(22)
+cv.lasso = cv.glmnet(x, y, 
+                     type.measure = "mse", 
+                     alpha = 1, 
+                     lambda = exp(seq(-10, 1, length = 100)))
+
+plot(cv.lasso)
+```
+
+```{r}
+lambda.lasso = cv.lasso$lambda.min
+lambda.lasso
+```
+
+```{r, results = "hide"}
+set.seed(22)
+lasso.coef = predict(lasso.mod, s = lambda.lasso, type = "coefficients")
+```
+
+```{r}
+set.seed(22)
+lasso_pred = predict(lasso.mod, s = lambda.lasso, newx = x_test)
+lasso.mse = mean((lasso_pred - y_test)^2)
+```
+
+There are `r sum(abs(lasso.coef) > 0)` non-zero coefficient estimates.
+
+The MSE of the lasso model is `r round(lasso.mse, digits = 3)`.
