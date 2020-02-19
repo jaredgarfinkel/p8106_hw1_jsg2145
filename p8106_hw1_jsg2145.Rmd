@@ -9,6 +9,8 @@ output: html_document
 library(tidyverse)
 library(viridis)
 library(glmnet)
+library(pls)
+library(ISLR)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
@@ -145,3 +147,24 @@ lasso.mse = mean((lasso_pred - y_test)^2)
 There are `r sum(abs(lasso.coef) > 0)` non-zero coefficient estimates.
 
 The MSE of the lasso model is `r round(lasso.mse, digits = 3)`.
+
+## Part d
+
+```{r, results = "hide"}
+set.seed(22)
+train = df %>% 
+  sample_frac(0.5)
+pcr.fit = pcr(solubility~., data = train, scale = TRUE, validation = "CV")
+summary(pcr.fit)
+```
+
+```{r}
+validationplot(pcr.fit, val.type = "MSEP")
+```
+
+```{r}
+set.seed(22)
+pcr.pred = predict(pcr.fit, newdata = df_test)
+mean((pcr.pred - y_test)^2)
+```
+
