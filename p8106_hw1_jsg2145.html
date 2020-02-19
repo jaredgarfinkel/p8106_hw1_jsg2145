@@ -439,6 +439,9 @@ ridge_pred = predict(ridge.mod, s = best.lambda, newx = x_test)
 
 mse = mean((ridge_pred - y_test)^2)</code></pre>
 <p>The MSE from the ridge model is 0.512.</p>
+</div>
+<div id="part-c" class="section level2">
+<h2>Part c</h2>
 <pre class="r"><code>set.seed(22)
 lasso.mod = glmnet(x, y, 
                     standardize = TRUE, 

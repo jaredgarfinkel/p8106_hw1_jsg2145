@@ -106,6 +106,8 @@ mse = mean((ridge_pred - y_test)^2)
 
 The MSE from the ridge model is `r round(mse, digits = 3)`.
 
+## Part c
+
 ```{r}
 set.seed(22)
 lasso.mod = glmnet(x, y, 
