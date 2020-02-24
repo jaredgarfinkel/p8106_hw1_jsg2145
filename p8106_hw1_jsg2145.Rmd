@@ -104,7 +104,7 @@ y_test = pull(df_test, solubility)
 
 ridge_pred = predict(ridge.mod, s = best.lambda, newx = x_test)
 
-mse = mean((ridge_pred - y_test)^2)
+mse = mean((y_test - ridge_pred)^2)
 ```
 
 The MSE from the ridge model is `r round(mse, digits = 3)`.
@@ -171,7 +171,7 @@ summary(pcr.mod)
 ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 
 set.seed(22)
-pcr.fit <- train(x, y,
+pcr.fit = train(x, y,
                  method = "pcr",
                  tuneLength = nrow(df),
                  trControl = ctrl1,
@@ -189,3 +189,11 @@ mse.pcr = mean((pcr.pred - y_test)^2)
 ```
 
 The PSR model chooses `r pcr.fit$bestTune` components with an MSE of `r round(mse.pcr, digits = 3)`.
+
+## Part e, Results
+
+While the MSE for a linear model is `r round(MSE, digits = 3)`, this test error can be reduced using further regression methods. Of the ridge, lasso, and principal component regression methods, the lasso regression returns the lowest MSE, suggesting a model with `r sum(abs(lasso.coef) > 0)` components is the best model of the three.
+
+## Part f, Discussion
+
+As mentioned above, the model with the lowest MSE is considered the best predictive model, being the lasso model.
