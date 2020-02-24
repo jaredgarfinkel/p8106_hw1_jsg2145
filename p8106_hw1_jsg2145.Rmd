@@ -45,7 +45,7 @@ df_test = read_csv("./solubility_test.csv") %>%
   janitor::clean_names()
 
 set.seed(22)
-pred = predict(fit, data = df_test)
+pred = predict(fit, newdata = df_test)
 
 MSE = mean((df_test$solubility - pred)^2)
 
