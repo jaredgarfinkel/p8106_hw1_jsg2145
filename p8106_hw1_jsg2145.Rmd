@@ -28,20 +28,20 @@ scale_fill_discrete = scale_fill_viridis_d
 theme_set(theme_minimal() + theme(legend.position = "bottom"))
 ```
 
-```{r, results = "hide"}
-df = read_csv("./solubility_train.csv") %>% 
+```{r, echo = FALSE, results = "hide"}
+df = read_csv("./Data/solubility_train.csv") %>% 
   janitor::clean_names()
 ```
 
 ## Part a
 
-```{r, results = "hide"}
+```{r, echo = FALSE, results = "hide"}
 fit = lm(solubility ~ ., data = df)
 summary(fit)
 ```
 
 ```{r}
-df_test = read_csv("./solubility_test.csv") %>% 
+df_test = read_csv("./Data/solubility_test.csv") %>% 
   janitor::clean_names()
 
 set.seed(22)
@@ -51,6 +51,7 @@ MSE = mean((df_test$solubility - pred)^2)
 
 MSE
 ```
+The MSE for the linear model is `r round(MSE, digits = 3)`.
 
 ## Part b
 
@@ -90,7 +91,10 @@ best.lambda <- cv.ridge$lambda.min
 best.lambda
 ```
 
+The lambda from the ridge regression is `r round(best.lambda, digits = 3)`.
+
 ```{r, results = "hide"}
+set.seed(22)
 predict(ridge.mod, s = best.lambda, type = "coefficients")
 ```
 
@@ -104,10 +108,10 @@ y_test = pull(df_test, solubility)
 
 ridge_pred = predict(ridge.mod, s = best.lambda, newx = x_test)
 
-mse = mean((y_test - ridge_pred)^2)
+mse_ridge = mean((y_test - ridge_pred)^2)
 ```
 
-The MSE from the ridge model is `r round(mse, digits = 3)`.
+The MSE from the ridge model is `r round(mse_ridge, digits = 3)`.
 
 ## Part c
 
@@ -133,6 +137,8 @@ plot(cv.lasso)
 lambda.lasso = cv.lasso$lambda.min
 lambda.lasso
 ```
+
+The lambda returned by the lasso regression is `r round(lambda.lasso, digits= 5)`.
 
 ```{r, results = "hide"}
 set.seed(22)
@@ -168,9 +174,9 @@ summary(pcr.mod)
 ```
 
 ```{r pcr with caret}
+set.seed(22)
 ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 
-set.seed(22)
 pcr.fit = train(x, y,
                  method = "pcr",
                  tuneLength = nrow(df),
