@@ -12,6 +12,7 @@ library(glmnet)
 library(pls)
 library(ISLR)
 library(caret)
+library(ModelMetrics)
 knitr::opts_chunk$set(
 	echo = TRUE,
 	warning = FALSE,
@@ -36,8 +37,8 @@ df = read_csv("./Data/solubility_train.csv") %>%
 ## Part a
 
 ```{r, echo = FALSE, results = "hide"}
-fit = lm(solubility ~ ., data = df)
-summary(fit)
+lm.mod = lm(solubility ~ ., data = df)
+summary(lm.mod)
 ```
 
 ```{r}
@@ -45,7 +46,7 @@ df_test = read_csv("./Data/solubility_test.csv") %>%
   janitor::clean_names()
 
 set.seed(22)
-pred = predict(fit, newdata = df_test)
+pred = predict(lm.mod, newdata = df_test)
 
 MSE = mean((df_test$solubility - pred)^2)
 
@@ -177,7 +178,7 @@ summary(pcr.mod)
 set.seed(22)
 ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
 
-pcr.fit = train(x, y,
+pcr.mod = train(x, y,
                  method = "pcr",
                  tuneLength = nrow(df),
                  trControl = ctrl1,
@@ -185,18 +186,68 @@ pcr.fit = train(x, y,
 ```
 
 ```{r}
-ggplot(pcr.fit, highlight = TRUE)
+ggplot(pcr.mod, highlight = TRUE)
 ```
 
 ```{r}
 set.seed(22)
-pcr.pred = predict(pcr.fit, newdata = df_test)
+pcr.pred = predict(pcr.mod, newdata = df_test)
 mse.pcr = mean((pcr.pred - y_test)^2)
 ```
 
-The PSR model chooses `r pcr.fit$bestTune` components with an MSE of `r round(mse.pcr, digits = 3)`.
+The PCR model chooses `r pcr.mod$bestTune` components with an MSE of `r round(mse.pcr, digits = 3)`.
+
+## Now do it in caret
+
+```{r}
+set.seed(22)
+ridge.fit <- train(x, y,
+                   method = "glmnet",
+                   tuneGrid = expand.grid(alpha = 0, 
+                                          lambda = exp(seq(-10, 1, length = 100))),
+                   trControl = ctrl1)
+
+predy2.ridge <- predict(ridge.fit$finalModel, newx = x_test, 
+                        s = ridge.fit$bestTune$lambda, type = "response")
+
+mse(y_test, predy2.ridge)
+
+set.seed(22)
+lasso.fit <- train(x, y,
+                   method = "glmnet",
+                   tuneGrid = expand.grid(alpha = 1, 
+                                          lambda = exp(seq(-10, 1, length = 100))),
+                   trControl = ctrl1)
+
+predy2.lasso <- predict(lasso.fit$finalModel, newx = x_test, 
+                        s = lasso.fit$bestTune$lambda, type = "response")
+
+mse(y_test, predy2.lasso)
+
+set.seed(22)
+lm.fit <- train(x, y,
+                method = "lm",
+                trControl = ctrl1)
+
+predy2.lm <- predict(lm.fit$finalModel, newdata = data.frame(x_test))
+
+mse(y_test, predy2.lm)
+```
+
 
 ## Part e, Results
+
+```{r}
+resamp <- resamples(list(lasso = lasso.fit, 
+                         ridge = ridge.fit, 
+                         pcr = pcr.mod,
+                         lm = lm.fit))
+
+summary(resamp)
+
+bwplot(resamp, metric = "RMSE")
+```
+
 
 While the MSE for a linear model is `r round(MSE, digits = 3)`, this test error can be reduced using further regression methods. Of the ridge, lasso, and principal component regression methods, the lasso regression returns the lowest MSE, suggesting a model with `r sum(abs(lasso.coef) > 0)` components is the best model of the three.
 
