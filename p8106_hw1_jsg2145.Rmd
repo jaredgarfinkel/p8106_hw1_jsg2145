@@ -166,24 +166,38 @@ pcr.mod <- pcr(solubility ~ .,
                scale = TRUE, 
                validation = "CV")
 
-validationplot(pcr.mod, val.type="MSEP", legendpos = "topright")
+validationplot(pcr.mod, val.type = "MSEP", legendpos = "topright", )
+
+cv.mse <- RMSEP(pcr.mod)
+ncomp.cv <- which.min(cv.mse$val[1,,])-1
+ncomp.cv
+
+
+which.min()
 
 y.pred.pcr <- predict(pcr.mod, newdata = df_test, 
-                      ncomp = )
+                      ncomp = 228)
 
-summary(pcr.mod)
 ```
 
 ```{r pcr with caret}
 set.seed(22)
 ctrl1 <- trainControl(method = "repeatedcv", number = 10, repeats = 5)
+```
 
+```{r}
+set.seed(22)
 pcr.mod = train(x, y,
                  method = "pcr",
-                 tuneLength = nrow(df),
+                 tuneLength = ncol(df),
                  trControl = ctrl1,
                  preProc = c("center", "scale"))
 ```
+
+```{r}
+nrow(df)
+```
+
 
 ```{r}
 ggplot(pcr.mod, highlight = TRUE)
