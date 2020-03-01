@@ -158,26 +158,25 @@ The MSE of the lasso model is `r round(lasso.mse, digits = 3)`.
 
 ## Part d, Principal Component Regression
 
-```{r, include = FALSE, eval = FALSE}
+```{r pcr in pls}
 set.seed(22)
 df = as_tibble(df)
+
 pcr.mod <- pcr(solubility ~ .,
                data = df,
                scale = TRUE, 
                validation = "CV")
 
-validationplot(pcr.mod, val.type = "MSEP", legendpos = "topright", )
+validationplot(pcr.mod, val.type = "MSEP", newdata = df_test, legendpos = "topright")
 
 cv.mse <- RMSEP(pcr.mod)
 ncomp.cv <- which.min(cv.mse$val[1,,])-1
 ncomp.cv
 
-
-which.min()
-
 y.pred.pcr <- predict(pcr.mod, newdata = df_test, 
-                      ncomp = 228)
-
+                      ncomp = ncomp.cv)
+# test MSE
+mse(y_test, y.pred.pcr)
 ```
 
 ```{r pcr with caret}
@@ -193,11 +192,6 @@ pcr.mod = train(x, y,
                  trControl = ctrl1,
                  preProc = c("center", "scale"))
 ```
-
-```{r}
-nrow(df)
-```
-
 
 ```{r}
 ggplot(pcr.mod, highlight = TRUE)
