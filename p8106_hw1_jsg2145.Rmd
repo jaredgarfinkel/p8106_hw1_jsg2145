@@ -2,7 +2,7 @@
 title: "p8106_hw1_jsg2145"
 author: "Jared Garfinkel"
 date: "2/18/2020"
-output: github_document
+output: pdf_document
 ---
 
 ```{r setup, include=FALSE}
@@ -14,7 +14,7 @@ library(ISLR)
 library(caret)
 library(ModelMetrics)
 knitr::opts_chunk$set(
-	echo = TRUE,
+	echo = FALSE,
 	warning = FALSE,
 	fig.width = 8, 
   fig.height = 6,
@@ -41,7 +41,7 @@ lm.mod = lm(solubility ~ ., data = df)
 summary(lm.mod)
 ```
 
-```{r}
+```{r, results = "hide"}
 df_test = read_csv("./Data/solubility_test.csv") %>% 
   janitor::clean_names()
 
@@ -83,11 +83,11 @@ cv.ridge = cv.glmnet(x, y,
 plot(cv.ridge)
 ```
 
-```{r, results = "hide"}
+```{r, results = "hide", eval = FALSE}
 plot(ridge.mod, xvar = "lambda", label = TRUE)
 ```
 
-```{r}
+```{r, results = "hide"}
 best.lambda <- cv.ridge$lambda.min
 best.lambda
 ```
@@ -134,7 +134,7 @@ cv.lasso = cv.glmnet(x, y,
 plot(cv.lasso)
 ```
 
-```{r}
+```{r, results = "hide"}
 lambda.lasso = cv.lasso$lambda.min
 lambda.lasso
 ```
@@ -218,7 +218,7 @@ ridge.fit <- train(x, y,
 predy2.ridge <- predict(ridge.fit$finalModel, newx = x_test, 
                         s = ridge.fit$bestTune$lambda, type = "response")
 
-mse(y_test, predy2.ridge)
+ridge.caret = mse(y_test, predy2.ridge)
 
 set.seed(22)
 lasso.fit <- train(x, y,
@@ -230,7 +230,7 @@ lasso.fit <- train(x, y,
 predy2.lasso <- predict(lasso.fit$finalModel, newx = x_test, 
                         s = lasso.fit$bestTune$lambda, type = "response")
 
-mse(y_test, predy2.lasso)
+lasso.caret = mse(y_test, predy2.lasso)
 
 set.seed(22)
 lm.fit <- train(x, y,
@@ -239,9 +239,8 @@ lm.fit <- train(x, y,
 
 predy2.lm <- predict(lm.fit$finalModel, newdata = data.frame(x_test))
 
-mse(y_test, predy2.lm)
+lm.caret = mse(y_test, predy2.lm)
 ```
-
 
 ## Part e, Results
 
